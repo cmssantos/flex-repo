@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexRepo", "FlexRepo\FlexRepo.csproj", "{AE29207A-28D5-49A3-9455-236BD53F423F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexRepo", "src\FlexRepo\FlexRepo.csproj", "{AE29207A-28D5-49A3-9455-236BD53F423F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexRepo.Tests", "FlexRepo.Tests\FlexRepo.Tests.csproj", "{03A9389B-0DC3-46C7-AC7F-3279ABD84190}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexRepo.Tests", "tests\FlexRepo.Tests\FlexRepo.Tests.csproj", "{03A9389B-0DC3-46C7-AC7F-3279ABD84190}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FlexRepo\FlexRepo.csproj" />
+    <ProjectReference Include="..\..\src\FlexRepo\FlexRepo.csproj" />
   </ItemGroup>
 
 </Project>
