@@ -20,7 +20,7 @@ public class RepositoryTests
     {
         // Arrange
         using var context = new TestDbContext(_dbContextOptions);
-        var repository = new Repository<TestUser, Guid, TestDbContext>(context);
+        var repository = new Repository<TestUser, Guid>(context);
         var entity = new TestUser { Id = Guid.NewGuid(), Name = "Test Entity" };
 
         // Act
@@ -40,7 +40,7 @@ public class RepositoryTests
     {
         // Arrange
         using var context = new TestDbContext(_dbContextOptions);
-        var repository = new Repository<TestUser, Guid, TestDbContext>(context);
+        var repository = new Repository<TestUser, Guid>(context);
         var testUser = new TestUser { Id = Guid.NewGuid(), Email = "test@example.com", Name = "Test User" };
 
         await repository.AddAsync(testUser, true);
@@ -59,7 +59,7 @@ public class RepositoryTests
     {
         // Arrange
         using var context = new TestDbContext(_dbContextOptions);
-        var repository = new Repository<TestUser, Guid, TestDbContext>(context);
+        var repository = new Repository<TestUser, Guid>(context);
 
         // Act
         var result = await repository.GetSingleOrDefaultAsync(u => u.Email == "nonexistent@example.com");

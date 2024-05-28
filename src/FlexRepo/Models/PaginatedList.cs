@@ -48,18 +48,28 @@ public class PaginatedList<T>
     /// <param name="pageSize">The size of the page.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task representing the asynchronous operation, returning the paginated list.</returns>
-    public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageIndex, int pageSize,
-        CancellationToken cancellationToken = default)
+    public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageIndex, int pageSize)
     {
-        if (pageIndex < 1)
-        {
-            throw new ArgumentException("Page index must be greater than or equal to 1.", nameof(pageIndex));
-        }
+        ValidateParameters(source, pageIndex, pageSize);
 
-        if (pageSize < 1)
-        {
-            throw new ArgumentException("Page size must be greater than or equal to 1.", nameof(pageSize));
-        }
+        return await CreateAsync(source, pageIndex, pageSize, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="PaginatedList{T}"/> asynchronously.
+    /// </summary>
+    /// <param name="source">The source queryable to paginate.</param>
+    /// <param name="pageIndex">The index of the page to retrieve.</param>
+    /// <param name="pageSize">The size of the page.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation, returning the paginated list.</returns>
+    public static async Task<PaginatedList<T>> CreateAsync(
+        IQueryable<T> source,
+        int pageIndex,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        ValidateParameters(source, pageIndex, pageSize);
 
         var count = await source.CountAsync(cancellationToken);
 
@@ -69,5 +79,20 @@ public class PaginatedList<T>
             .ToListAsync(cancellationToken);
 
         return new PaginatedList<T>(items, count, pageIndex, pageSize);
+    }
+
+    private static void ValidateParameters(IQueryable<T> source, int pageIndex, int pageSize)
+    {
+        ArgumentNullException.ThrowIfNull(source, nameof(source));
+
+        if (pageIndex < 1)
+        {
+            throw new ArgumentException("Page index must be greater than or equal to 1.", nameof(pageIndex));
+        }
+
+        if (pageSize < 1)
+        {
+            throw new ArgumentException("Page size must be greater than or equal to 1.", nameof(pageSize));
+        }
     }
 }

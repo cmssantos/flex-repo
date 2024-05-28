@@ -4,6 +4,9 @@ using FlexRepo.Interfaces;
 using FlexRepo.Models;
 using Microsoft.EntityFrameworkCore;
 
+[assembly: CLSCompliant(true)]
+[assembly: System.Runtime.InteropServices.ComVisible(false)]
+
 namespace FlexRepo.Repositories;
 
 // <summary>
@@ -12,27 +15,43 @@ namespace FlexRepo.Repositories;
 /// <typeparam name="T">The entity type.</typeparam>
 /// <typeparam name="TKey">The type of the primary key.</typeparam>
 /// <typeparam name="TContext">The type of the DbContext.</typeparam>
-public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : class where TContext : DbContext
+public class Repository<T, TKey> : IRepository<T, TKey> where T : class
 {
-    private readonly TContext _context;
+    private readonly DbContext _context;
     private readonly DbSet<T> _dbSet;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Repository{T, TKey, TContext}"/> class.
+    /// Initializes a new instance of the <see cref="Repository{T, TKey}"/> class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public Repository(TContext context)
+    [CLSCompliant(false)]
+    public Repository(DbContext context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _context = context ?? throw new ArgumentNullException(nameof(context), "DbContext cannot be null");
         _dbSet = _context.Set<T>();
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
+        => await GetAllAsync(null, null, "", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<T>> GetAllAsync(string includeProperties, CancellationToken cancellationToken)
+        => await GetAllAsync(null, null, includeProperties, cancellationToken);
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<T>> GetAllAsync(
-        Expression<Func<T, bool>>? filterExpression = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>>? orderByExpression = null,
-        string includeProperties = "",
-        CancellationToken cancellationToken = default)
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderByExpression,
+        string includeProperties,
+        CancellationToken cancellationToken)
+            => await GetAllAsync(null, orderByExpression, includeProperties, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<T>> GetAllAsync(
+        Expression<Func<T, bool>>? filterExpression,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderByExpression,
+        string includeProperties,
+        CancellationToken cancellationToken)
     {
         IQueryable<T> query = _dbSet;
 
@@ -50,6 +69,36 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
 
         return await query.ToListAsync(cancellationToken);
     }
+
+    /// <inheritdoc/>
+    public async Task<PaginatedList<T>> GetPaginatedAsync(
+        int pageIndex,
+        int pageSize,
+        CancellationToken cancellationToken)
+            => await GetPaginatedAsync(pageIndex, pageSize, null, null, "", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<PaginatedList<T>> GetPaginatedAsync(
+        int pageIndex,
+        int pageSize,
+        string includeProperties,
+        CancellationToken cancellationToken)
+            => await GetPaginatedAsync(pageIndex, pageSize, null, null, includeProperties, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<PaginatedList<T>> GetPaginatedAsync(
+        int pageIndex,
+        int pageSize,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderByExpression,
+        string includeProperties,
+        CancellationToken cancellationToken)
+            => await GetPaginatedAsync(
+                pageIndex,
+                pageSize,
+                null,
+                orderByExpression,
+                includeProperties,
+                cancellationToken);
 
     /// <inheritdoc/>
     public async Task<PaginatedList<T>> GetPaginatedAsync(
@@ -78,7 +127,10 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public T? GetById(TKey id, string includeProperties = "")
+    public T? GetById(TKey id) => GetById(id, "");
+
+    /// <inheritdoc/>
+    public T? GetById(TKey id, string includeProperties)
     {
         IQueryable<T> query = _dbSet;
 
@@ -88,18 +140,52 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public async Task<T?> GetByIdAsync(TKey id, string includeProperties = "", CancellationToken cancellationToken = default)
+    public async Task<T?> GetByIdAsync(TKey id)
+        => await GetByIdAsync(id, "", CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken)
+        => await GetByIdAsync(id, "", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetByIdAsync(TKey id, string includeProperties)
+        => await GetByIdAsync(id, includeProperties, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetByIdAsync(
+        TKey id,
+        string includeProperties,
+        CancellationToken cancellationToken)
     {
         IQueryable<T> query = _dbSet;
 
         query = query.ApplyIncludes(includeProperties);
 
-        return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, GetPrimaryKeyName())!.Equals(id), cancellationToken);
+        return await query.FirstOrDefaultAsync(e =>
+            EF.Property<TKey>(e, GetPrimaryKeyName())!.Equals(id), cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<T?> GetSingleOrDefaultAsync(Expression<Func<T, bool>> predicate, string includeProperties = "",
-        CancellationToken cancellationToken = default)
+    public async Task<T?> GetSingleOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        => await GetSingleOrDefaultAsync(predicate, "", CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetSingleOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
+        CancellationToken cancellationToken)
+        => await GetSingleOrDefaultAsync(predicate, "", cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetSingleOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
+        string includeProperties)
+        => await GetSingleOrDefaultAsync(predicate, includeProperties, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T?> GetSingleOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
+        string includeProperties,
+        CancellationToken cancellationToken)
     {
         IQueryable<T> query = _dbSet;
 
@@ -109,7 +195,10 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public T Add(T entity, bool saveChanges = false)
+    public T Add(T entity) => Add(entity, false);
+
+    /// <inheritdoc/>
+    public T Add(T entity, bool saveChanges)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -124,7 +213,18 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public async Task<T> AddAsync(T entity, bool saveChanges = false, CancellationToken cancellationToken = default)
+    public async Task<T> AddAsync(T entity) => await AddAsync(entity, false, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T> AddAsync(T entity, CancellationToken cancellationToken)
+        => await AddAsync(entity, false, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<T> AddAsync(T entity, bool saveChanges)
+        => await AddAsync(entity, saveChanges, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<T> AddAsync(T entity, bool saveChanges, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -139,7 +239,10 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public void Update(T entity, bool saveChanges = false)
+    public void Update(T entity) => Update(entity, false);
+
+    /// <inheritdoc/>
+    public void Update(T entity, bool saveChanges)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -152,7 +255,18 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public async Task UpdateAsync(T entity, bool saveChanges = false, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(T entity) => await UpdateAsync(entity, false, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task UpdateAsync(T entity, CancellationToken cancellationToken)
+        => await UpdateAsync(entity, false, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task UpdateAsync(T entity, bool saveChanges)
+        => await UpdateAsync(entity, saveChanges, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task UpdateAsync(T entity, bool saveChanges, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -165,7 +279,10 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public void Delete(TKey id, bool saveChanges = false)
+    public void Delete(TKey id) => Delete(id, false);
+
+    /// <inheritdoc/>
+    public void Delete(TKey id, bool saveChanges)
     {
         var entity = GetById(id) ?? throw new KeyNotFoundException($"Entity with id {id} not found.");
 
@@ -178,7 +295,18 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     }
 
     /// <inheritdoc/>
-    public async Task DeleteAsync(TKey id, bool saveChanges = false, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(TKey id) => await DeleteAsync(id, false, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task DeleteAsync(TKey id, CancellationToken cancellationToken)
+        => await DeleteAsync(id, false, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task DeleteAsync(TKey id, bool saveChanges)
+        => await DeleteAsync(id, saveChanges, CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task DeleteAsync(TKey id, bool saveChanges, CancellationToken cancellationToken)
     {
         var entity = await GetByIdAsync(id, cancellationToken: cancellationToken) ??
             throw new KeyNotFoundException($"Entity with id {id} not found.");
@@ -195,7 +323,11 @@ public class Repository<T, TKey, TContext> : IRepository<T, TKey> where T : clas
     public int SaveChanges() => _context.SaveChanges();
 
     /// <inheritdoc/>
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<int> SaveChangesAsync()
+        => await SaveChangesAsync(CancellationToken.None);
+
+    /// <inheritdoc/>
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
         => await _context.SaveChangesAsync(cancellationToken);
 
     private string GetPrimaryKeyName()

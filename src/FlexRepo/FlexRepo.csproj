@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>FlexRepo</PackageId>
-    <Version>0.2.1</Version>
+    <Version>1.8.0</Version>
     <Authors>Cleudice Santos</Authors>
     <Company>Cleudice Santos</Company>
     <Product>FlexRepo</Product>

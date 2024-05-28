@@ -48,7 +48,7 @@ public class User
 }
 ```
 
-### 2. Configure o Repositório Genérico
+### 2. Configure o Repositório Específico
 
 Implemente o repositório genérico com o seu DbContext.
 
@@ -61,7 +61,18 @@ public class UserRepository : Repository<User, Guid, AppDbContext>
 }
 ```
 
-### 3. Use o Repositório em seu Serviço
+### 3. Configure a Injeção de Dependência
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+    services.AddScoped<IRepository<User, Guid>, UserRepository>();
+}
+```
+
+### 4. Use o Repositório em seu Serviço
 
 Use o repositório genérico em seus serviços para realizar operações CRUD.
 
@@ -102,7 +113,7 @@ public class UserService
 }
 ```
 
-### 4. Configuração do TestDbContext
+### 5. Configuração do TestDbContext
 
 Defina um contexto de banco de dados para testes usando o provedor de banco de dados em memória.
 
@@ -123,7 +134,7 @@ namespace FlexRepo.Tests
 }
 ```
 
-### 5. Configuração de Testes
+### 6. Configuração de Testes
 
 Adicione testes unitários para garantir que seu repositório funcione corretamente.
 
@@ -202,7 +213,7 @@ namespace FlexRepo.Tests
 }
 ```
 
-### 6. Extensões para IQueryable
+### 7. Extensões para IQueryable
 
 Utilize a classe de extensão para facilitar a inclusão de propriedades relacionadas.
 
@@ -230,3 +241,11 @@ namespace FlexRepo.Extensions
     }
 }
 ```
+
+### Contribuição
+
+Contribuições são bem-vindas! Sinta-se à vontade para abrir um problema ou enviar uma solicitação pull.
+
+### Licença
+
+Este projeto está licenciado sob a MIT License.

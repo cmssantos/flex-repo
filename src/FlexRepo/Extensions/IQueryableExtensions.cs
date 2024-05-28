@@ -17,7 +17,7 @@ public static class IQueryableExtensions
     /// <exception cref="ArgumentNullException">Thrown if the query is null.</exception>
     public static IQueryable<T> ApplyIncludes<T>(this IQueryable<T> queryable, string includeProperties) where T : class
     {
-        ArgumentNullException.ThrowIfNull(queryable);
+        ArgumentNullException.ThrowIfNull(queryable, nameof(queryable));
 
         if (string.IsNullOrWhiteSpace(includeProperties))
         {
